@@ -1,0 +1,82 @@
+body{
+    font-size: medium;
+    font-family: "Comic Sans MS", sans-serif;
+
+
+}
+.row{
+    display: flex;
+
+}
+.column {
+    display: table-cell;
+    horiz-align: center;
+    flex: 50%;
+
+}
+#hits_table {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+    border: 3px solid;
+    margin-top: 10px;
+
+}
+#hits_table tr[class="content"]:hover{
+    background-color: cyan;
+}
+td{
+    text-align: center;
+}
+
+@media screen
+and (max-device-width: 642px)
+and (min-device-width: 2px) {
+
+    body {
+
+        font-size: 48px;
+
+
+
+    }
+    input{
+        font-size: 48px;
+    }
+    #canvas_wrapper{
+        width: 100%;
+        height: 100%;
+    }
+    .default_button {
+        font-size: 48px;
+        width: 100%;
+    }
+    .row{
+        display: table;
+
+    }
+    .column {
+        float: left;
+        width: 100%;
+
+    }
+
+
+
+}
+@media screen
+and (max-device-width: 1079px)
+and (min-device-width: 643px)
+{
+    .row{
+        display: table;
+
+    }
+    .column {
+        float: left;
+        width: 100%;
+
+    }
+}
+
+

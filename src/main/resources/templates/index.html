@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lab 4</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="https://yastatic.net/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" th:src="@{js/LoginController.js}"></script>
+    <link rel ="stylesheet" th:href="@{css/common.css}">
+    <link rel ="stylesheet" th:href="@{css/index.css}">
+</head>
+<body onload = "if(localStorage.getItem('token') !== null) window.location.replace('/shoot')">
+<div id="app">
+    <div id = "header">
+        <p id = "student_name">Дыбов Артём</p>
+        <p id = "student_group">Группа P3213</p>
+        <p id = "student_task">Вариант 13908</p>
+    </div>
+    <div id = login_form >
+        <loginform > </loginform>
+    </div>
+
+</div>
+
+<script>
+
+    Vue.component("loginform", {
+
+        template: `
+    <div>
+    <p>{{msg}}</p>
+<form>
+    <table>
+    <tr>
+    <td>
+    <label for="login_input">Логин:</label>
+    </td>
+    <td>
+    <input id="login_input" type="text" v-model = "login" >
+    </td>
+    </tr>
+    <tr>
+    <td>
+    <label for="password_input">Пароль:</label>
+    </td>
+    <td>
+    <input id="password_input" type="password"  v-model = "password">
+    </td>
+    </tr>
+    </table>
+    <div id ="buttons_lr">
+    <button class="default_button login" type = "button" id = "login_button" v-on:click = "perform_login">Войти</button>
+
+    <button class="default_button login" type = "button" id = "register_button" v-on:click = "perform_register">Регистрация</button>
+</div>
+</form>
+</div>`,
+        data: function (){return {
+            login: '',
+            password: '',
+            is_err: false,
+             msg: ''
+        }},
+        methods: {
+            perform_login: function () {
+                if (!validate(this.login, this.password)) return
+                perform_login(this.login, this.password,
+                    (data) => {
+
+                        localStorage.setItem("token", data["token"])
+                        window.location.replace("/shoot")
+
+
+                    },
+                    (resp) => this.msg = "Неверный логин или пароль")
+
+
+            },
+            perform_register: function () {
+                if (!validate(this.login, this.password)) return
+                perform_register(this.login, this.password,
+                    (data) => {
+                        console.log("registered")
+                        this.msg = "Вы зарегестрированы"
+
+
+                    },
+                    (resp) => {this.msg = "Пользователь уже зарегестрирован"; console.log(resp)}
+                )
+            }
+
+
+        }
+    })
+
+
+    let app = new Vue({
+        el: '#app',
+
+
+
+    })
+</script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>СТРЕЛЬБААААА</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="https://yastatic.net/jquery/3.3.1/jquery.min.js"></script>
+    <script type = text/javascript th:src="@{js/ShootController.js}"></script>
+    <script type = text/javascript th:src="@{js/canvas_controller.js}"></script>
+    <link rel ="stylesheet" th:href="@{css/common.css}">
+    <link rel ="stylesheet" th:href="@{css/shoot.css}">
+
+</head>
+<body>
+    <div id = "app">
+
+    </div>
+
+<script>
+    Vue.component(
+        'textfield', {
+            props: ['check_function', 'form_id', 'label_text', 'label_id', 'values', 'input_type'],
+            data: function() { return {
+
+                font_color: "black",
+                label_value: ""
+            }},
+            methods: {
+                update_value: function (){
+                    let check = new Function(
+                        "let func = " + this.check_function + ";" +
+                        "return func" + "(" + this.label_value + ")" + ";"
+
+                    );
+                    let res = check()
+                    if (!res) this.font_color = "red"
+                    else this.font_color = "black"
+
+
+                }
+            },
+            template: `
+                <div v-bind:id="form_id">
+                    <p v-bind:id="label_id" v-bind:style="{color: font_color}">{{label_text}}{{label_value}}</p>
+                    <tr >
+                        <td>
+                            <input v-bind:type="input_type" v-on:change="update_value" v-model="label_value">
+                        </td>
+                    </tr>
+
+                </div>
+
+            `
+        }
+    )
+    Vue.component(
+        'buttons', {
+            props: ['check_function', 'form_id', 'label_text', 'label_id', 'values'],
+
+            data: function() { return {
+                label_value: "0",
+                font_color: "black",
+
+                click_callback: function (value){
+
+                }
+
+            }},
+            methods: {
+                update_value: function (value){
+                    this.label_value = value
+
+                    let check = new Function(
+                        "let func = " + this.check_function + ";" +
+                        "return func" + "(" + this.label_value + ")" + ";"
+
+                    );
+                    let res = check()
+                    if (!res) this.font_color = "red"
+                    else this.font_color = "black"
+                }
+            },
+            template: `
+                <div v-bind:id="form_id">
+                    <p v-bind:id="label_id" v-bind:style="{color: font_color}">{{label_text}}{{label_value}}</p>
+                    <tr >
+                        <td v-for = "value in values">
+                            <button class="default_button" type="button" v-bind:value="value" v-on:click="update_value(value); click_callback(label_value);">{{value}}</button>
+                        </td>
+                    </tr>
+
+                </div>
+
+            `
+        }
+    )
+    Vue.component(
+        'input_form', {
+            template: `<div><slot/></div>`
+        }
+    )
+    let app =  new Vue({
+        el: "#app",
+        data: {
+            hits: []
+        },
+        methods: {
+            logout: function (){
+                localStorage.removeItem("token")
+                window.location.replace("/home")
+            },
+            canvas_click: function(event){
+                let canvas = document.getElementById("target_canvas")
+                let rect = canvas.getBoundingClientRect()
+                let width = canvas.width
+                let height = canvas.height
+                let stepX = width / stepCount
+                let stepY = height / stepCount
+                let x = -(canvas.width / 2 - (event.clientX - rect.left)) / stepX
+                let y = (canvas.height / 2 - (event.clientY - rect.top)) / stepY
+                let form = this.$root.$children.find(child => { return child.$options.name === "input_form"; })
+                let r =  form.$children.find(child => { return child.$props.form_id === "r_form"; }).label_value;
+                if (r <= 0) return;
+                shoot(x, y, r, (data)=>{
+                        this.update_all()
+                    },
+                    (response) => {
+                        check_auth()
+
+                    }
+                )
+            },
+            update_all: function (){
+
+                get_hits(
+                    (data) => {
+                        this.hits = data.reverse()
+                        let form = this.$root.$children.find(child => { return child.$options.name === "input_form"; })
+
+                        setTimeout(() => render_canvas(form.$children.find(child => { return child.$props.form_id === "r_form"; }).label_value), 1)
+                    },
+                    (response) => {
+                        if (check_auth())
+                        alert("Application error")
+                    }
+                )
+            },
+            perform_shoot: function (){
+                let form = this.$root.$children.find(child => { return child.$options.name === "input_form"; });
+                let x = form.$children.find(child => { return child.$props.form_id === "x_form"; }).label_value;
+                let y =  form.$children.find(child => { return child.$props.form_id === "y_form"; }).label_value;
+                let r =  form.$children.find(child => { return child.$props.form_id === "r_form"; }).label_value;
+                if (!check_y(y) || !check_r(r)) {alert("Form Invalid"); return;}
+                shoot(x, y, r, (data)=>{
+                    this.update_all()
+                },
+                    (response) => {
+                        if (check_auth())
+                        alert("Application error")
+                    }
+                )
+
+            }
+        },
+        template: `
+        <div class = "row">
+
+        <div class = "column">
+        <div id = "canvas_wrapper">
+        <canvas v-on:click="canvas_click" id = "target_canvas" width="600" height="600"></canvas>
+        </div>
+        <input_form>
+        <buttons v-bind:values = "[5, -4, -3, -2, -1, 0, 1, 2, 3]" label_id = "x_buttons" label_text = "Значение X: " form_id="x_form" check_function = "(value)=>{return true}"></buttons>
+        <textfield  input_type="number" label_id = "y_label" label_text = "Значение Y: " form_id="y_form" check_function = "check_y"></textfield>
+        <buttons v-bind:values = "[-5, -4, -3, -2, -1, 0, 1, 2, 3]" label_id = "r_buttons" label_text = "Значение R: " form_id="r_form" check_function = "check_r"></buttons>
+        </input_form>
+        <button  class="default_button" type="button" v-on:click="perform_shoot()">Стреляяяяяяяяяяяяяяяяяяяяй</button>
+        <button class="default_button" type="button" v-on:click="logout()">Выйти</button>
+        </div>
+         <div class = "column canvas">
+        <table id = "hits_table">
+        <tr>
+                <th style="text-align:center">X</th>
+                <th style="text-align:center">Y</th>
+                <th style="text-align:center">R</th>
+                <th style="text-align:center">hit</th>
+            </tr>
+            <tbody>
+            <tr v-for="hit in hits" class = "content">
+            <td>{{hit.x.toFixed(2)}}</td>
+            <td>{{hit.y.toFixed(2)}}</td>
+            <td>{{hit.r.toFixed(2)}}</td>
+            <td v-bind:class = "hit.hit == true ? 'hit': 'miss'">{{hit.hit}}</td>
+                </tr>
+                </tbody>
+        </table>
+
+        </div>
+        </div>
+        `,
+        mounted(){
+            this.update_all()
+            let form = this.$root.$children.find(child => { return child.$options.name === "input_form"; });
+            form.$children.find(child => { return child.$props.form_id === "r_form"; }).click_callback = function (value){
+                render_canvas(value)
+            };
+        }
+
+    })
+</script>
+</body>
+</html>
